@@ -6,8 +6,14 @@ on:
 
 jobs:
   build:
-    runs-on: docker   # default node:lts image (has node); DinD available for nested builds
+    runs-on: docker
     steps:
+      - name: Install docker CLI (node:lts job talks to the dind sidecar)
+        run: |
+          set -eux
+          apt-get update -qq
+          apt-get install -y -qq docker.io >/dev/null
+          docker version
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -15,9 +21,9 @@ jobs:
       - name: Build luci-app-5gmodem apk in the OpenWrt SDK
         run: |
           set -eux
-          mkdir -p "$PWD/out"
+          mkdir -p "$GITHUB_WORKSPACE/out"
           docker run --rm \
-            -v "$PWD/pkgsrc":/pkgsrc -v "$PWD/out":/out \
+            -v "$GITHUB_WORKSPACE/pkgsrc":/pkgsrc -v "$GITHUB_WORKSPACE/out":/out \
             docker.io/openwrt/sdk:mediatek-filogic-25.12.5 bash -c '
               set -eux
               chown -R buildbot /builder /out
@@ -33,7 +39,7 @@ jobs:
                 find bin/packages -name 'luci-app-5gmodem*.apk' -exec cp -v {} /out/ ';'
               "
             '
-          ls -la "$PWD/out/"
+          ls -la "$GITHUB_WORKSPACE/out/"
       - name: Upload apk
         uses: actions/upload-artifact@v3
         with:
