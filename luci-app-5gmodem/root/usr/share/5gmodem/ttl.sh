@@ -16,7 +16,7 @@ modem_iface() {
 	# configured interface first, then the first control-proto interface
 	I=$(uci -q get $CFG.@5gmodem[0].network)
 	if [ -z "$I" ]; then
-		for P in modemmanager qmi mbim ncm wwan; do
+		for P in atc modemmanager qmi mbim ncm wwan; do
 			I=$(uci show network 2>/dev/null | sed -n "s/^network\.\([^.]*\)\.proto='$P'\$/\1/p" | head -1)
 			[ -n "$I" ] && break
 		done
