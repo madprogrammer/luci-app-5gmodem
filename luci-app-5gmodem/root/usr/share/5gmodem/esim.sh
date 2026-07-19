@@ -79,31 +79,21 @@ run_lpac() {
 	# предыдущей операции канал мог остаться открытым (или закрылся не полностью),
 	# и следующий CCHO завис бы -> euicc_init падает. Одна операция = чистый старт.
 	for _c in 1 2 3 4 5 6 7 8; do at_bounded "$PORT" "AT+CCHC=$_c" 2 >/dev/null; done
-	_RES="/tmp/5gmodem_esim_res.$$"
-	_LOOP="/tmp/5gmodem_esim_loop.$$"
-	rm -f "$_RES" "$_LOOP"; mkfifo "$_LOOP" 2>/dev/null
-	# Зеркальный пайплайн: мост читает запросы lpac из FIFO (loop), пишет ответы в
-	# pipe -> stdin lpac; stdout lpac -> loop -> stdin моста. Мост выходит на "lpa"
-	# результате -> lpac ловит SIGPIPE и завершается -> пайплайн закрывается сразу.
-	# HTTP: либо отдаём lpac его curl, либо заворачиваем ES9+ в тот же stdio-поток
-	# к мосту (бэкенды различаются полем "type", поток один).
-	if [ "$(http_backend)" = "bridge" ]; then
-		_CA=$(ca_bundle); _HTTPDRV="stdio"
-	else
-		_CA=""; _HTTPDRV="curl"
-	fi
-	sh "$BRIDGE" "$PORT" "$_RES" "$_CA" "$LIVELOG" < "$_LOOP" \
-		| LPAC_APDU=stdio LPAC_HTTP="$_HTTPDRV" "$LPAC" "$@" > "$_LOOP" 2>/dev/null &
-	_PID=$!
-	# Опрос вместо wait+сторож: busybox плохо реапит сабшелл пайплайна через wait
-	# (зомби + зависание на 40 c). kill -0 ловит завершение мгновенно. Мост выходит
-	# на "lpa", lpac умирает по SIGPIPE -> пайплайн закрывается в ту же секунду.
-	_n=0
-	while kill -0 "$_PID" 2>/dev/null && [ "$_n" -lt "$_T" ]; do sleep 1; _n=$((_n + 1)); done
-	kill "$_PID" 2>/dev/null; killall lpac 2>/dev/null
-	rm -f "$_LOOP"
-	if [ -s "$_RES" ]; then cat "$_RES"; else err "timeout"; fi
-	rm -f "$_RES"
+	# Прямой AT-драйвер lpac. В ЭТОЙ сборке lpac пропатчен под FM350-GL (голый CCHO,
+	# +CME ERROR, ATE0) - поэтому stdio-мост больше не нужен: нативный at-бэкенд не
+	# виснет и работает надёжнее. HTTP оставляем на встроенном curl (в нашей сборке
+	# он берёт SM-DS/SM-DP+ GSMA CI - проверено es9p/discovery).
+	_RAW="/tmp/5gmodem_esim_raw.$$"
+	rm -f "$_RAW"
+	timeout "$_T" env LPAC_APDU=at LPAC_APDU_AT_DEVICE="$PORT" LPAC_HTTP=curl \
+		"$LPAC" "$@" > "$_RAW" 2>/dev/null
+	killall lpac 2>/dev/null
+	# Прогресс (download шлёт "progress"-строки) -> livelog для спиннера UI.
+	[ -s "$_RAW" ] && cat "$_RAW" >> "$LIVELOG" 2>/dev/null
+	# Возвращаем ТОЛЬКО финальную "lpa"-строку (иначе ломается JSON у вызывающего).
+	_R=$(grep '"type":"lpa"' "$_RAW" 2>/dev/null | tail -1)
+	rm -f "$_RAW"
+	if [ -n "$_R" ]; then printf '%s' "$_R"; else err "timeout"; fi
 }
 
 # AT-команда с ограничением по времени (sms_tool сам таймаута не имеет и на
