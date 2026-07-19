@@ -1,0 +1,21 @@
+#!/bin/sh
+# Re-apply the 5gmodem TTL/hop-limit fix when a modem interface comes up, so the
+# fw4 include (/etc/nftables.d/10-5gmodem-ttl.nft) is (re)generated with the now-known
+# l3_device. Without this, TTL configured while the modem was down yields an empty
+# include and never activates on connect.
+[ "$ACTION" = ifup ] || exit 0
+
+# Only fire for modem interfaces (the ones ttl.sh targets).
+case "$(uci -q get network.$INTERFACE.proto)" in
+	atc|modemmanager|qmi|mbim|ncm|wwan) ;;
+	*) exit 0 ;;
+esac
+
+# Only if TTL is actually configured (any direction/family set).
+for k in ttl4in ttl4out ttl6in ttl6out; do
+	[ -n "$(uci -q get 5gmodem.@5gmodem[0].$k)" ] && {
+		/usr/share/5gmodem/ttl.sh apply >/dev/null 2>&1
+		break
+	}
+done
+exit 0
