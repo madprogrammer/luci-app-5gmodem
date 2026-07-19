@@ -1,0 +1,41 @@
+name: build-apk
+on:
+  push:
+    branches: [wh3000]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: docker
+    container:
+      image: docker.io/openwrt/sdk:mediatek-filogic-25.12.5
+      options: --user root
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: pkgsrc
+      - name: Build luci-app-5gmodem apk
+        run: |
+          set -eux
+          # OpenWrt refuses to build as root; the SDK image ships user 'buildbot'.
+          chown -R buildbot:buildbot "$GITHUB_WORKSPACE" /builder
+          su buildbot -c '
+            set -eux
+            cd /builder
+            cp feeds.conf.default feeds.conf
+            echo "src-link fivegmodem '"$GITHUB_WORKSPACE"'/pkgsrc" >> feeds.conf
+            ./scripts/feeds update -a >/dev/null 2>&1
+            ./scripts/feeds install -p fivegmodem luci-app-5gmodem
+            echo CONFIG_PACKAGE_luci-app-5gmodem=y >> .config
+            make defconfig >/dev/null 2>&1
+            make package/luci-app-5gmodem/compile -j$(nproc)
+            mkdir -p '"$GITHUB_WORKSPACE"'/out
+            find bin/packages -name "luci-app-5gmodem*.apk" -exec cp -v {} '"$GITHUB_WORKSPACE"'/out/ \;
+          '
+          ls -la "$GITHUB_WORKSPACE"/out/
+      - name: Upload apk
+        uses: actions/upload-artifact@v3
+        with:
+          name: luci-app-5gmodem-apk
+          path: out/*.apk
