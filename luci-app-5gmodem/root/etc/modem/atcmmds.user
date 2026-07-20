@@ -1,15 +1,24 @@
-Модем ➜ ATI;ATI
-CUSTOMER ➜ AT^CUSTOMER?;AT^CUSTOMER?
+Идентификация ➜ ATI;ATI
+Версия ПО (пакет) ➜ AT+GTPKGVER?;AT+GTPKGVER?
 Качество сигнала ➜ AT+CSQ;AT+CSQ
-Аггрегации ➜ AT^CA_INFO?;AT^CA_INFO?
-Температура ➜ AT^TEMP?;AT^TEMP?
-Режим сети ➜ AT^SLMODE?;AT^SLMODE?
-Скорость USB ➜ AT^USBTYPE?;AT^USBTYPE?
-Отладка ➜ AT^DEBUG?;AT^DEBUG?
-Перезагрузка ➜ AT+CFUN=1,1;AT+CFUN=1,1
-Аггрегации Compal ➜ AT+LCAINFO;AT+LCAINFO
-Качество сигнала Compal ➜ AT+CESQ;AT+CESQ
-Инфа о БС + Сигнал Compal ➜ AT+BINFO;AT+BINFO;AT+CESQ
-Прочитать номер SIM ➜ AT+CPBS="ON";AT+CPBS="ON";AT+CNUM
-Записать номер на SIM ➜ AT+CSCS="IRA";+CPBS="ON";+CPBW=1,"+79876543210",145,"Number"
-
+Сигнал (расширенный) ➜ AT+CESQ;AT+CESQ
+Информация о соте ➜ AT+GTCCINFO?;AT+GTCCINFO?
+Агрегация несущих (CA) ➜ AT+GTCAINFO?;AT+GTCAINFO?
+RAT и диапазоны ➜ AT+GTACT?;AT+GTACT?
+Оператор ➜ AT+COPS?;AT+COPS?
+Регистрация в сети (LTE) ➜ AT+CEREG?;AT+CEREG?
+APN / PDP-контексты ➜ AT+CGDCONT?;AT+CGDCONT?
+IP и DNS ➜ AT+CGCONTRDP;AT+CGCONTRDP
+IMEI ➜ AT+CGSN;AT+CGSN
+IMSI ➜ AT+CIMI;AT+CIMI
+ICCID SIM ➜ AT+ICCID?;AT+ICCID?
+EID (eSIM) ➜ AT+EID?;AT+EID?
+Тип SIM (USIM/eSIM) ➜ AT+SIMTYPE?;AT+SIMTYPE?
+Свой номер (MSISDN) ➜ AT+CNUM;AT+CNUM
+Температура (сенсор 0) ➜ AT+GTSENRDTEMP=0;AT+GTSENRDTEMP=0
+Список всех AT-команд ➜ AT+CLAC;AT+CLAC
+Режим полёта ВКЛ ➜ AT+CFUN=4;AT+CFUN=4
+Режим полёта ВЫКЛ ➜ AT+CFUN=1;AT+CFUN=1
+Перезагрузка модема ➜ AT+CFUN=1,1;AT+CFUN=1,1
+Прочитать номер с SIM ➜ AT+CPBS="ON";AT+CPBS="ON";AT+CNUM
+Записать номер на SIM ➜ AT+CPBW;AT+CSCS="IRA";AT+CPBS="ON";AT+CPBW=1,"+79876543210",145,"Number"
