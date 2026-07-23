@@ -25,7 +25,7 @@ PKG_VERSION:=1.5.2
 # r2 (WH3000 fork): default AT-command presets rewritten for the FM350-GL (dropped
 # other-vendor AT^…/Compal commands, added Fibocom +GT… equivalents), and the stock
 # promo phonebook entry removed.
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 define Package/luci-app-5gmodem/conffiles
 /etc/config/5gmodem
